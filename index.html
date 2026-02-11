@@ -5,199 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Controle de O.S.</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0ea5e9">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <link rel="icon" type="image/jpg" href="https://i.ibb.co/6R0pMhM/capa-app.jpg">
-    <link rel="apple-touch-icon" href="https://i.ibb.co/6R0pMhM/capa-app.jpg">
+    <link rel="icon" type="image/jpg" href="capa-app.jpg">
+    <link rel="apple-touch-icon" href="capa-app.jpg">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root { --bg-main: #020617; --accent: #38bdf8; }
+        body { background: var(--bg-main); color: white; font-family: sans-serif; margin: 0; touch-action: pan-y; }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
+        input, select { background: rgba(0,0,0,0.5) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; border-radius: 10px; padding: 10px; }
+        #btn-save, #btn-login { background: linear-gradient(90deg, #0ea5e9, #38bdf8); color: black; font-weight: 900; border-radius: 15px; }
+        @keyframes pulso-ruim { 50% { box-shadow: 0 0 15px #ef4444; border-color: #ef4444; } }
+        @keyframes pulso-bom { 50% { box-shadow: 0 0 15px #22c55e; border-color: #22c55e; } }
+        .perf-ruim { animation: pulso-ruim 1.5s infinite; border: 1px solid #ef4444 !important; }
+        .perf-boa { animation: pulso-bom 2s infinite; border: 1px solid #22c55e !important; }
+        .badge { font-size: 8px; padding: 2px 5px; border-radius: 4px; font-weight: bold; margin-left: 5px; color: black; }
+    </style>
 </head>
 <body>
 
-<div id="app-container" class="max-w-md mx-auto font-sans text-gray-800 min-h-screen">
-
-    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center p-6">
-        <div class="bg-white w-full p-8 rounded-3xl shadow-2xl text-center border border-gray-100">
-            <h2 class="text-2xl font-black mb-2">Acesso Restrito</h2>
-            <p class="text-sm mb-6 opacity-70">Entre com seus dados cadastrados</p>
-            <input type="text" id="login-nome" placeholder="Nome Completo" class="w-full mb-3 outline-none">
-            <input type="email" id="login-email" placeholder="E-mail" class="w-full mb-6 outline-none">
-            <button onclick="verificarAcesso()" id="btn-login" class="w-full py-4 rounded-xl shadow-lg">ENTRAR NO SISTEMA</button>
-            <p id="login-status" class="text-red-500 text-xs mt-4 hidden font-bold"></p>
+<div id="app-container" class="max-w-md mx-auto min-h-screen p-4">
+    <div id="login-screen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-6">
+        <div class="glass w-full p-8 text-center">
+            <h2 class="text-2xl font-black text-sky-400 mb-4">ACESSO RESTRITO</h2>
+            <input type="text" id="login-nome" placeholder="Seu Nome" class="w-full mb-3 outline-none">
+            <input type="email" id="login-email" placeholder="Seu E-mail" class="w-full mb-6 outline-none">
+            <button onclick="verificarAcesso()" id="btn-login" class="w-full py-4">ENTRAR</button>
+            <p id="login-status" class="text-red-500 text-xs mt-4 hidden"></p>
         </div>
     </div>
 
-    <div id="main-content" class="hidden p-4">
-        <div class="mb-4 text-center">
-            <div class="bg-blue-700 text-white py-3 rounded-full shadow-md mb-2 font-bold">📊 CONTROLE DE O.S</div>
-            <p class="text-xs font-semibold text-blue-400 uppercase">Olá, <span id="user-display" class="text-white"></span></p>
-            <button onclick="logout()" class="text-[10px] text-red-500 font-bold underline">Sair</button>
+    <div id="main-content" class="hidden">
+        <div class="text-center mb-6">
+            <div class="bg-sky-500 text-black py-2 rounded-full font-black text-sm mb-2">SISTEMA DE O.S.</div>
+            <p class="text-xs">Olá, <span id="user-display" class="text-sky-400"></span> | <button onclick="logout()" class="text-red-500 underline">Sair</button></p>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow-sm mb-4 flex gap-2 items-end">
+        <div class="glass p-4 flex gap-2 mb-4">
             <div class="flex-1">
-                <label class="text-[10px] font-bold text-gray-400 uppercase">Mês de Referência (Ciclo 25)</label>
-                <input type="month" id="filtro-mes" onchange="carregarDados()" class="w-full p-2 rounded-lg text-sm outline-none">
+                <label class="text-[9px] uppercase font-bold text-gray-500">Mês Ciclo 25</label>
+                <input type="month" id="filtro-mes" onchange="carregarDados()" class="w-full text-xs">
             </div>
-            <div class="w-24">
-                <label class="text-[10px] font-bold text-gray-400 uppercase">Meta O.S</label>
-                <input type="number" id="input-meta" onchange="atualizarMeta()" class="w-full p-2 rounded-lg text-sm outline-none">
+            <div class="w-20">
+                <label class="text-[9px] uppercase font-bold text-gray-500">Meta</label>
+                <input type="number" id="input-meta" onchange="atualizarMeta()" class="w-full text-xs">
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow-sm mb-4">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-black uppercase text-gray-500">Progresso do Ciclo</span>
-                <span id="txt-progresso" class="text-[10px] font-black text-blue-400">0/50</span>
+        <div class="glass p-4 mb-4">
+            <div class="flex justify-between text-[10px] font-bold mb-1">
+                <span>PROGRESSO</span> <span id="txt-progresso">0/0</span>
             </div>
-            <div class="w-full bg-gray-100 h-4 rounded-full overflow-hidden progress-bg">
+            <div class="w-full bg-white/10 h-3 rounded-full overflow-hidden">
                 <div id="barra-meta" class="h-full transition-all duration-500" style="width: 0%"></div>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-card p-4 rounded-2xl text-center shadow-lg border border-white/10">
-                <p class="text-[10px] uppercase font-bold opacity-60 text-white">Valor Total</p>
-                <p id="resValor" class="text-xl font-black text-white">R$ 0,00</p>
+            <div class="glass p-4 text-center">
+                <p class="text-[9px] text-gray-400">VALOR TOTAL</p>
+                <p id="resValor" class="font-black text-lg">R$ 0,00</p>
             </div>
-            <div class="bg-card p-4 rounded-2xl text-center shadow-lg border border-white/10">
-                <p class="text-[10px] uppercase font-bold opacity-60 text-white">O.S Executadas</p>
-                <p id="resQtd" class="text-xl font-black text-white">0</p>
-            </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-3xl shadow-xl border border-blue-100 mb-6">
-            <h2 class="text-blue-400 font-bold mb-4 text-sm uppercase">📝 Novo Lançamento</h2>
-            <div class="space-y-3">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="date" id="data" class="p-2 text-sm outline-none">
-                    <select id="tipo" class="p-2 text-sm outline-none">
-                        <option value="Trabalho">Trabalho</option>
-                        <option value="Folga">Folga</option>
-                        <option value="Feriado">Feriado</option>
-                        <option value="Domingo">Domingo</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="qtd" placeholder="Qtd" class="p-2 text-sm outline-none">
-                    <input type="number" id="valor" placeholder="R$" step="0.01" class="p-2 text-sm outline-none">
-                </div>
-                <input type="text" id="obs" class="w-full p-2 text-sm outline-none" placeholder="Observação...">
-                <button onclick="salvarNoBanco()" id="btn-save" class="w-full py-3 rounded-2xl shadow-md active:scale-95">SALVAR</button>
+            <div class="glass p-4 text-center">
+                <p class="text-[9px] text-gray-400">O.S. FEITAS</p>
+                <p id="resQtd" class="font-black text-lg">0</p>
             </div>
         </div>
 
-        <div id="listaHistorico" class="space-y-3 p-4 bg-blue-900/50 rounded-3xl shadow-inner min-h-[100px] mb-20"></div>
+        <div class="glass p-5 mb-6">
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <input type="date" id="data" class="text-xs">
+                <select id="tipo" class="text-xs">
+                    <option value="Trabalho">Trabalho</option>
+                    <option value="Folga">Folga</option>
+                    <option value="Feriado">Feriado</option>
+                    <option value="Domingo">Domingo</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <input type="number" id="qtd" placeholder="Qtd" class="text-xs">
+                <input type="number" id="valor" placeholder="R$" step="0.01" class="text-xs">
+            </div>
+            <input type="text" id="obs" placeholder="Obs..." class="w-full mb-4 text-xs">
+            <button onclick="salvarNoBanco()" id="btn-save" class="w-full py-3">SALVAR</button>
+        </div>
+
+        <div id="listaHistorico" class="space-y-3 pb-20"></div>
     </div>
 </div>
 
-</body>
-</html>
-
-:root {
-    --bg-main: #0f172a;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --accent-blue: #38bdf8;
-    --text-main: #f8fafc;
-}
-
-body { 
-    background-color: var(--bg-main) !important;
-    color: var(--text-main);
-    overflow-x: hidden;
-    touch-action: pan-y;
-}
-
-/* Efeito Glass nos Cards */
-.bg-white { 
-    background: var(--glass-bg) !important; 
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 24px !important;
-    color: var(--text-main) !important;
-}
-
-#login-screen { background-color: #020617 !important; }
-
-input, select {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 12px !important;
-    color: white !important;
-    padding: 10px !important;
-}
-
-#btn-save, #btn-login {
-    background: linear-gradient(90deg, #0ea5e9, #38bdf8) !important;
-    border: none !important;
-    font-weight: 800 !important;
-    color: #000 !important;
-}
-
-.bg-card { background: var(--glass-bg); }
-.progress-bg { background: rgba(255,255,255,0.1) !important; }
-
-/* ANIMAÇÕES DE DESEMPENHO */
-@keyframes pulso-critico {
-    0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.3); }
-    50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); border-color: #ef4444 !important; }
-}
-
-@keyframes pulso-sucesso {
-    0%, 100% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
-    50% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); border-color: #22c55e !important; }
-}
-
-.performance-ruim { animation: pulso-critico 1.5s infinite; border: 1px solid #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
-.performance-boa { animation: pulso-sucesso 2s infinite; border: 1px solid #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; }
-
-.badge-alerta, .badge-sucesso {
-    font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 8px; color: black;
-}
-.badge-alerta { background: #ef4444; }
-.badge-sucesso { background: #22c55e; }
-
-
+<script>
 const SUPABASE_URL = 'https://tnpxkbnqcixucpgrrdbv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRucHhrYm5xY2l4dWNwZ3JyZGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNTU2OTMsImV4cCI6MjA4MTkzMTY5M30.uLu2mok1tg8bfwTfT9hCiQo92KD9xHIcMhMoNm-SWcA';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let usuarioLogado = null;
 let metaMensal = parseInt(localStorage.getItem('metaSalva')) || 50;
-
 document.getElementById('filtro-mes').value = new Date().toISOString().substring(0, 7);
 
-async function verificarAcesso() {
-    const btn = document.getElementById('btn-login');
-    const emailInput = document.getElementById('login-email').value.toLowerCase().trim();
-    const nomeInput = document.getElementById('login-nome').value.trim();
-    
-    btn.innerText = "VERIFICANDO...";
-    const { data } = await _supabase.from('usuarios_permitidos').select('*').eq('email', emailInput);
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 
-    if (data && data.length > 0) {
-        usuarioLogado = { email: data[0].email, nome: nomeInput };
+async function verificarAcesso() {
+    const email = document.getElementById('login-email').value.toLowerCase().trim();
+    const nome = document.getElementById('login-nome').value.trim();
+    const { data } = await _supabase.from('usuarios_permitidos').select('*').eq('email', email);
+    if (data?.length > 0) {
+        usuarioLogado = { email, nome };
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('main-content').classList.remove('hidden');
-        document.getElementById('user-display').innerText = nomeInput;
+        document.getElementById('user-display').innerText = nome;
         document.getElementById('input-meta').value = metaMensal;
         carregarDados();
-    } else {
-        alert("Acesso Negado!");
-        btn.innerText = "ENTRAR NO SISTEMA";
-    }
+    } else { alert("Acesso negado!"); }
 }
 
 async function carregarDados() {
     if (!usuarioLogado) return;
     const mesSel = document.getElementById('filtro-mes').value.split('-');
     let ano = parseInt(mesSel[0]), mes = parseInt(mesSel[1]);
-
-    // Ciclo 25 a 25
     let mesIni = mes - 1, anoIni = ano;
     if (mesIni === 0) { mesIni = 12; anoIni--; }
     const dataInicio = `${anoIni}-${String(mesIni).padStart(2, '0')}-25`;
@@ -206,52 +138,41 @@ async function carregarDados() {
     const { data: registros } = await _supabase.from('registros_os').select('*')
         .eq('user_email', usuarioLogado.email).gte('data', dataInicio).lt('data', dataFim).order('data', { ascending: false });
 
-    if (registros) renderizarLista(registros);
+    renderizarLista(registros || []);
 }
 
 function renderizarLista(registros) {
     const lista = document.getElementById('listaHistorico');
     let vTotal = 0, qTotal = 0;
     lista.innerHTML = "";
-
     registros.forEach(item => {
         vTotal += item.valor; qTotal += item.qtd;
         const diaSemana = new Date(item.data + 'T00:00:00').getDay();
         const isTrabalho = item.tipo === 'Trabalho' && diaSemana !== 0;
-        
         let classe = '', badge = '';
         if (isTrabalho) {
-            if (item.qtd <= 2) { 
-                classe = 'performance-ruim'; 
-                badge = '<span class="badge-alerta">RENDIMENTO BAIXO</span>'; 
-            } else { 
-                classe = 'performance-boa'; 
-                badge = '<span class="badge-sucesso">MISSÃO CUMPRIDA</span>'; 
-            }
+            if (item.qtd <= 2) { classe = 'perf-ruim'; badge = '<span class="badge bg-red-500">STATUS: CRÍTICO</span>'; }
+            else { classe = 'perf-boa'; badge = '<span class="badge bg-green-500">MISSÃO CUMPRIDA</span>'; }
         }
-
         lista.innerHTML += `
-            <div class="bg-white p-3 mb-3 flex justify-between items-center ${classe}">
-                <div>
-                    <p class="text-xs font-black">${item.data.split('-').reverse().slice(0,2).join('/')} <span class="opacity-50">(${item.tipo})</span> ${badge}</p>
-                    <p class="text-[10px] opacity-60">${item.obs || ''}</p>
+            <div class="glass p-3 flex justify-between items-center ${classe}">
+                <div class="text-[11px]">
+                    <p class="font-black">${item.data.split('-').reverse().slice(0,2).join('/')} <span class="opacity-50">(${item.tipo})</span> ${badge}</p>
+                    <p class="opacity-60">${item.obs || ''}</p>
                 </div>
-                <div class="text-right flex items-center gap-3">
-                    <div>
-                        <p class="text-xs font-bold text-blue-400">${item.qtd} OS</p>
-                        <p class="text-sm font-black">R$ ${item.valor.toFixed(2)}</p>
-                    </div>
-                    <button onclick="apagarItem('${item.id}')" class="text-red-500">×</button>
+                <div class="text-right">
+                    <p class="font-black text-sky-400">${item.qtd} OS</p>
+                    <p class="font-black">R$ ${item.valor.toFixed(2)}</p>
+                    <button onclick="apagarItem('${item.id}')" class="text-red-500 text-[10px]">Excluir</button>
                 </div>
             </div>`;
     });
-
     document.getElementById('resValor').innerText = `R$ ${vTotal.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
     document.getElementById('resQtd').innerText = qTotal;
     const porc = Math.min((qTotal / metaMensal) * 100, 100);
     document.getElementById('barra-meta').style.width = porc + "%";
     document.getElementById('txt-progresso').innerText = `${qTotal}/${metaMensal}`;
-    document.getElementById('barra-meta').className = `h-full transition-all ${porc < 40 ? 'bg-red-500' : porc < 80 ? 'bg-blue-500' : 'bg-green-500'}`;
+    document.getElementById('barra-meta').style.backgroundColor = porc < 40 ? '#ef4444' : porc < 80 ? '#38bdf8' : '#22c55e';
 }
 
 function atualizarMeta() {
@@ -261,7 +182,6 @@ function atualizarMeta() {
 }
 
 async function salvarNoBanco() {
-    const btn = document.getElementById('btn-save');
     const registro = {
         user_email: usuarioLogado.email, user_nome: usuarioLogado.nome,
         data: document.getElementById('data').value, tipo: document.getElementById('tipo').value,
@@ -269,16 +189,15 @@ async function salvarNoBanco() {
         valor: parseFloat(document.getElementById('valor').value) || 0, obs: document.getElementById('obs').value
     };
     if(!registro.data) return alert("Data!");
-    btn.innerText = "S...";
-    const { error } = await _supabase.from('registros_os').insert([registro]);
-    if (!error) { carregarDados(); }
-    btn.innerText = "SALVAR";
+    await _supabase.from('registros_os').insert([registro]);
+    carregarDados();
 }
 
 async function apagarItem(id) {
-    if(confirm("Excluir?")) { 
-        await _supabase.from('registros_os').delete().eq('id', id); 
-        carregarDados(); 
-    }
+    if(confirm("Excluir?")) { await _supabase.from('registros_os').delete().eq('id', id); carregarDados(); }
 }
 
+function logout() { location.reload(); }
+</script>
+</body>
+</html>

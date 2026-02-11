@@ -1,16 +1,16 @@
 {
   "name": "Controle de O.S. Bruno",
   "short_name": "Minhas OS",
-  "description": "Sistema de Gestão de Ordens de Serviço",
+  "description": "Gestão de O.S. Ciclo 25 a 25",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#0ea5e9",
   "icons": [
     {
-      "src": "https://i.ibb.co/6R0pMhM/capa-app.jpg",
+      "src": "capa-app.jpg",
       "sizes": "512x512",
-      "type": "image/jpg",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ]
