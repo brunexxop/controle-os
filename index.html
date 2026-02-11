@@ -96,3 +96,189 @@
 
 </body>
 </html>
+
+:root {
+    --bg-main: #0f172a;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-blue: #38bdf8;
+    --text-main: #f8fafc;
+}
+
+body { 
+    background-color: var(--bg-main) !important;
+    color: var(--text-main);
+    overflow-x: hidden;
+    touch-action: pan-y;
+}
+
+/* Efeito Glass nos Cards */
+.bg-white { 
+    background: var(--glass-bg) !important; 
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 24px !important;
+    color: var(--text-main) !important;
+}
+
+#login-screen { background-color: #020617 !important; }
+
+input, select {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    padding: 10px !important;
+}
+
+#btn-save, #btn-login {
+    background: linear-gradient(90deg, #0ea5e9, #38bdf8) !important;
+    border: none !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+}
+
+.bg-card { background: var(--glass-bg); }
+.progress-bg { background: rgba(255,255,255,0.1) !important; }
+
+/* ANIMAÇÕES DE DESEMPENHO */
+@keyframes pulso-critico {
+    0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.3); }
+    50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); border-color: #ef4444 !important; }
+}
+
+@keyframes pulso-sucesso {
+    0%, 100% { box-shadow: 0 0 5px rgba(34, 197, 94, 0.3); }
+    50% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); border-color: #22c55e !important; }
+}
+
+.performance-ruim { animation: pulso-critico 1.5s infinite; border: 1px solid #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
+.performance-boa { animation: pulso-sucesso 2s infinite; border: 1px solid #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; }
+
+.badge-alerta, .badge-sucesso {
+    font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 8px; color: black;
+}
+.badge-alerta { background: #ef4444; }
+.badge-sucesso { background: #22c55e; }
+
+
+const SUPABASE_URL = 'https://tnpxkbnqcixucpgrrdbv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRucHhrYm5xY2l4dWNwZ3JyZGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNTU2OTMsImV4cCI6MjA4MTkzMTY5M30.uLu2mok1tg8bfwTfT9hCiQo92KD9xHIcMhMoNm-SWcA';
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let usuarioLogado = null;
+let metaMensal = parseInt(localStorage.getItem('metaSalva')) || 50;
+
+document.getElementById('filtro-mes').value = new Date().toISOString().substring(0, 7);
+
+async function verificarAcesso() {
+    const btn = document.getElementById('btn-login');
+    const emailInput = document.getElementById('login-email').value.toLowerCase().trim();
+    const nomeInput = document.getElementById('login-nome').value.trim();
+    
+    btn.innerText = "VERIFICANDO...";
+    const { data } = await _supabase.from('usuarios_permitidos').select('*').eq('email', emailInput);
+
+    if (data && data.length > 0) {
+        usuarioLogado = { email: data[0].email, nome: nomeInput };
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden');
+        document.getElementById('user-display').innerText = nomeInput;
+        document.getElementById('input-meta').value = metaMensal;
+        carregarDados();
+    } else {
+        alert("Acesso Negado!");
+        btn.innerText = "ENTRAR NO SISTEMA";
+    }
+}
+
+async function carregarDados() {
+    if (!usuarioLogado) return;
+    const mesSel = document.getElementById('filtro-mes').value.split('-');
+    let ano = parseInt(mesSel[0]), mes = parseInt(mesSel[1]);
+
+    // Ciclo 25 a 25
+    let mesIni = mes - 1, anoIni = ano;
+    if (mesIni === 0) { mesIni = 12; anoIni--; }
+    const dataInicio = `${anoIni}-${String(mesIni).padStart(2, '0')}-25`;
+    const dataFim = `${ano}-${String(mes).padStart(2, '0')}-25`;
+
+    const { data: registros } = await _supabase.from('registros_os').select('*')
+        .eq('user_email', usuarioLogado.email).gte('data', dataInicio).lt('data', dataFim).order('data', { ascending: false });
+
+    if (registros) renderizarLista(registros);
+}
+
+function renderizarLista(registros) {
+    const lista = document.getElementById('listaHistorico');
+    let vTotal = 0, qTotal = 0;
+    lista.innerHTML = "";
+
+    registros.forEach(item => {
+        vTotal += item.valor; qTotal += item.qtd;
+        const diaSemana = new Date(item.data + 'T00:00:00').getDay();
+        const isTrabalho = item.tipo === 'Trabalho' && diaSemana !== 0;
+        
+        let classe = '', badge = '';
+        if (isTrabalho) {
+            if (item.qtd <= 2) { 
+                classe = 'performance-ruim'; 
+                badge = '<span class="badge-alerta">RENDIMENTO BAIXO</span>'; 
+            } else { 
+                classe = 'performance-boa'; 
+                badge = '<span class="badge-sucesso">MISSÃO CUMPRIDA</span>'; 
+            }
+        }
+
+        lista.innerHTML += `
+            <div class="bg-white p-3 mb-3 flex justify-between items-center ${classe}">
+                <div>
+                    <p class="text-xs font-black">${item.data.split('-').reverse().slice(0,2).join('/')} <span class="opacity-50">(${item.tipo})</span> ${badge}</p>
+                    <p class="text-[10px] opacity-60">${item.obs || ''}</p>
+                </div>
+                <div class="text-right flex items-center gap-3">
+                    <div>
+                        <p class="text-xs font-bold text-blue-400">${item.qtd} OS</p>
+                        <p class="text-sm font-black">R$ ${item.valor.toFixed(2)}</p>
+                    </div>
+                    <button onclick="apagarItem('${item.id}')" class="text-red-500">×</button>
+                </div>
+            </div>`;
+    });
+
+    document.getElementById('resValor').innerText = `R$ ${vTotal.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+    document.getElementById('resQtd').innerText = qTotal;
+    const porc = Math.min((qTotal / metaMensal) * 100, 100);
+    document.getElementById('barra-meta').style.width = porc + "%";
+    document.getElementById('txt-progresso').innerText = `${qTotal}/${metaMensal}`;
+    document.getElementById('barra-meta').className = `h-full transition-all ${porc < 40 ? 'bg-red-500' : porc < 80 ? 'bg-blue-500' : 'bg-green-500'}`;
+}
+
+function atualizarMeta() {
+    metaMensal = parseInt(document.getElementById('input-meta').value) || 1;
+    localStorage.setItem('metaSalva', metaMensal);
+    carregarDados();
+}
+
+async function salvarNoBanco() {
+    const btn = document.getElementById('btn-save');
+    const registro = {
+        user_email: usuarioLogado.email, user_nome: usuarioLogado.nome,
+        data: document.getElementById('data').value, tipo: document.getElementById('tipo').value,
+        qtd: parseInt(document.getElementById('qtd').value) || 0,
+        valor: parseFloat(document.getElementById('valor').value) || 0, obs: document.getElementById('obs').value
+    };
+    if(!registro.data) return alert("Data!");
+    btn.innerText = "S...";
+    const { error } = await _supabase.from('registros_os').insert([registro]);
+    if (!error) { carregarDados(); }
+    btn.innerText = "SALVAR";
+}
+
+async function apagarItem(id) {
+    if(confirm("Excluir?")) { 
+        await _supabase.from('registros_os').delete().eq('id', id); 
+        carregarDados(); 
+    }
+}
+
